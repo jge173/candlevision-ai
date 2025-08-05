@@ -1,35 +1,44 @@
+from roboflow import InferenceHTTPClient
 import streamlit as st
 from PIL import Image
+import tempfile
 
-# Título do app
-st.title("📊 CandleVisionAI - Agente de IA para Análise do Mercado Financeiro")
+# Inicializa o cliente Roboflow
+CLIENT = InferenceHTTPClient(
+    api_url="https://serverless.roboflow.com",
+    api_key="PEyV0064YFk1pNh46OS6"
+)
+
+# Nome do projeto e versão do modelo
+PROJECT = "CandleVisionAI-2"  # substituído conforme imagem
+VERSION = "v2"                # versão correta conforme imagem
+
+# Configuração da interface Streamlit
+st.set_page_config(page_title="CandleVisionAI - Análise de Mercado", layout="centered")
+st.title("📊 CandleVisionAI - Análise de Mercado Financeiro")
 st.markdown("""
-Bem-vindo ao agente de IA para análise de gráficos de velas (candlestick).  
-Este app utiliza um modelo treinado para identificar padrões e gerar sinais de compra/venda.  
-*Nota: O modelo ainda está em treinamento no Roboflow. Esta é uma versão preliminar da interface.*
+Este aplicativo permite enviar gráficos de velas (candlestick) e utiliza um modelo treinado no Roboflow para identificar padrões e gerar sinais de decisão.
 """)
 
-# Seção de upload de imagem
-st.header("📁 Upload do Gráfico de Velas")
-uploaded_file = st.file_uploader("Envie uma imagem do gráfico (PNG, JPG)", type=["png", "jpg", "jpeg"])
+# Upload da imagem
+uploaded_file = st.file_uploader("📁 Envie uma imagem do gráfico (PNG, JPG)", type=["png", "jpg", "jpeg"])
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Gráfico enviado", use_column_width=True)
+if uploaded_file:
+    st.image(uploaded_file, caption="Gráfico enviado", use_column_width=True)
 
-    # Placeholder para análise de padrões
-    st.subheader("🔍 Padrões Identificados (placeholder)")
-    st.info("O modelo ainda está em treinamento. Os padrões serão exibidos aqui futuramente.")
+    # Salva a imagem temporariamente
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        tmp_path = tmp_file.name
 
-    # Placeholder para sinais de compra/venda
-    st.subheader("📈 Sinais de Compra/Venda (placeholder)")
-    st.warning("Os sinais serão gerados automaticamente assim que o modelo estiver integrado.")
+    # Faz a inferência com o modelo Roboflow
+    try:
+        result = CLIENT.infer(tmp_path, model_id=f"{PROJECT}/{VERSION}")
+        st.success("✅ Análise concluída com sucesso!")
+        st.subheader("🧠 Resultado da Inferência")
+        st.json(result)
+    except Exception as e:
+        st.error(f"❌ Erro ao conectar com o modelo: {e}")
 
-# Rodapé
 st.markdown("---")
-st.markdown("📌 **Status do modelo:** Em treinamento no Roboflow")
-st.markdown("🔧 **Versão da interface:** 0.1 (pré-modelo)")
-st.markdown("💡 Desenvolvido por Jefferson com apoio do Copilot")
-
-# Mensagem final
-st.success("Interface carregada com sucesso. Pronta para integração com o modelo assim que estiver disponível.")
+st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
