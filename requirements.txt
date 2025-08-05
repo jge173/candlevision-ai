@@ -1,3 +1,4 @@
 streamlit
 roboflow==1.0.6
+inference-sdk
 Pillow
