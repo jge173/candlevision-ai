@@ -1,4 +1,4 @@
-from roboflow import InferenceHTTPClient
+from inference_sdk import InferenceHTTPClient
 import streamlit as st
 from PIL import Image
 import tempfile
@@ -42,3 +42,4 @@ if uploaded_file:
 
 st.markdown("---")
 st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
+
