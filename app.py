@@ -1,45 +1,47 @@
-from inference_sdk import InferenceHTTPClient
 import streamlit as st
+import requests
 from PIL import Image
-import tempfile
+import io
 
-# Inicializa o cliente Roboflow
-CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key="PEyV0064YFk1pNh46OS6"
-)
+st.set_page_config(page_title="Agente de IA Financeiro", layout="wide")
+st.title("📊 Análise de Padrões de Velas com IA")
 
-# Nome do projeto e versão do modelo
-PROJECT = "CandleVisionAI-2"  # substituído conforme imagem
-VERSION = "v2"                # versão correta conforme imagem
-
-# Configuração da interface Streamlit
-st.set_page_config(page_title="CandleVisionAI - Análise de Mercado", layout="centered")
-st.title("📊 CandleVisionAI - Análise de Mercado Financeiro")
-st.markdown("""
-Este aplicativo permite enviar gráficos de velas (candlestick) e utiliza um modelo treinado no Roboflow para identificar padrões e gerar sinais de decisão.
-""")
-
-# Upload da imagem
-uploaded_file = st.file_uploader("📁 Envie uma imagem do gráfico (PNG, JPG)", type=["png", "jpg", "jpeg"])
+# Upload de imagem
+uploaded_file = st.file_uploader("Envie uma imagem do gráfico de velas", type=["png", "jpg", "jpeg"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Gráfico enviado", use_column_width=True)
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Imagem enviada", use_column_width=True)
 
-    # Salva a imagem temporariamente
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        tmp_path = tmp_file.name
+    # Enviar imagem para Roboflow
+    st.info("🔍 Enviando imagem para análise...")
+    api_url = "https://serverless.roboflow.com",api_key="PEyV0064YFk1pNh46OS6"
 
-    # Faz a inferência com o modelo Roboflow
-    try:
-        result = CLIENT.infer(tmp_path, model_id=f"{PROJECT}/{VERSION}")
-        st.success("✅ Análise concluída com sucesso!")
-        st.subheader("🧠 Resultado da Inferência")
-        st.json(result)
-    except Exception as e:
-        st.error(f"❌ Erro ao conectar com o modelo: {e}")
+    response = requests.post(
+        api_url,
+        files={"file": uploaded_file},
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+
+    if response.status_code == 200:
+        result = response.json()
+        predictions = result.get("predictions", [])
+        if predictions:
+            pattern = predictions[0]["class"]
+            confidence = predictions[0]["confidence"]
+            st.success(f"Padrão detectado: **{pattern}** com confiança de {confidence:.2%}")
+            if "bullish" in pattern.lower():
+                st.markdown("✅ **Sugestão de entrada**: Compra")
+            elif "bearish" in pattern.lower():
+                st.markdown("🚫 **Sugestão de entrada**: Venda")
+            else:
+                st.markdown("🔄 **Sugestão de entrada**: Manter posição")
+        else:
+            st.warning("Nenhum padrão detectado com alta confiança.")
+    else:
+        st.error("Erro ao conectar com a API do Roboflow.")
 
 st.markdown("---")
 st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
+
 
