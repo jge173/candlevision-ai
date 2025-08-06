@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from PIL import Image
 import io
+import inference_sdk from inferenceHTTPClient
 
 st.set_page_config(page_title="Agente de IA Financeiro", layout="wide")
 st.title("📊 Análise de Padrões de Velas com IA")
@@ -48,6 +49,7 @@ if uploaded_file:
 
 st.markdown("---")
 st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
+
 
 
 
