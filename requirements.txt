@@ -2,5 +2,5 @@ numpy==1.26.4
 opencv-python-headless==4.10.0.84
 pillow==10.1.0
 roboflow==1.2.3
-inference-sdk==0.9.24
+inference-sdk
 streamline==0.1.5
