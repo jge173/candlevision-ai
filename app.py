@@ -15,7 +15,12 @@ if uploaded_file:
 
     # Enviar imagem para Roboflow
     st.info("🔍 Enviando imagem para análise...")
-    api_url = "https://serverless.roboflow.com",api_key="PEyV0064YFk1pNh46OS6"
+    
+    CLIENT = InferenceHTTPClient(
+        api_url="https://serverless.roboflow.com",
+        api_key="PEyV0064YFk1pNh46OS6"
+    )
+
 
     response = requests.post(
         api_url,
@@ -43,5 +48,6 @@ if uploaded_file:
 
 st.markdown("---")
 st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
+
 
 
