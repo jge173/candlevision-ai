@@ -1,6 +1,6 @@
-streamlit
-Pillow
+numpy==1.26.4
 opencv-python-headless==4.10.0.84
-inference-sdk
-numpy
+pillow==10.1.0
 roboflow==1.2.3
+inference-sdk==0.9.24
+streamline==0.1.5
