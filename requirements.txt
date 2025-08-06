@@ -1,5 +1,4 @@
 numpy==1.26.4
-opencv-python-headless==4.10.0.84
 pillow==9.5.0
 roboflow==1.2.3
 inference-sdk
