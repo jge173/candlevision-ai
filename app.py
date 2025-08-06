@@ -17,25 +17,23 @@ if uploaded_file:
     # Enviar imagem para Roboflow
     st.info("🔍 Enviando imagem para análise...")
     
+    # Configuração do cliente Roboflow
     CLIENT = InferenceHTTPClient(
-        api_url="https://serverless.roboflow.com",
-        api_key="PEyV0064YFk1pNh46OS6"
+        api_url="https://detect.roboflow.com",  # URL corrigida
+        api_key="PEyV0064YFk1pNh46OS6"         # Sua chave API
     )
-
-
-    response = requests.post(
-        api_url,
-        files={"file": uploaded_file},
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
-
-    if response.status_code == 200:
-        result = response.json()
-        predictions = result.get("predictions", [])
-        if predictions:
+    
+    try:
+        # Usando o método correto do InferenceHTTPClient
+        result = CLIENT.infer(image, model_id="candle-patterns/1")  # Substitua pelo seu model_id
+        
+        if "predictions" in result and len(result["predictions"]) > 0:
+            predictions = result["predictions"]
             pattern = predictions[0]["class"]
             confidence = predictions[0]["confidence"]
+            
             st.success(f"Padrão detectado: **{pattern}** com confiança de {confidence:.2%}")
+            
             if "bullish" in pattern.lower():
                 st.markdown("✅ **Sugestão de entrada**: Compra")
             elif "bearish" in pattern.lower():
@@ -44,16 +42,9 @@ if uploaded_file:
                 st.markdown("🔄 **Sugestão de entrada**: Manter posição")
         else:
             st.warning("Nenhum padrão detectado com alta confiança.")
-    else:
-        st.error("Erro ao conectar com a API do Roboflow.")
+            
+    except Exception as e:
+        st.error(f"Erro ao conectar com a API do Roboflow: {str(e)}")
 
 st.markdown("---")
 st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
-
-
-
-
-
-
-
-
