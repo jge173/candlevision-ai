@@ -1,5 +1,5 @@
 numpy==1.26.4
 pillow==10.0.0
-roboflow==1.2.4
+roboflow==1.2.3
 inference-sdk
 streamline
