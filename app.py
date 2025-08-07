@@ -1,8 +1,7 @@
 import streamlit as st
-import requests
 from PIL import Image
 import io
-from inference_sdk import InferenceHTTPClient 
+from inference_sdk import InferenceHTTPClient
 
 st.set_page_config(page_title="Agente de IA Financeiro", layout="wide")
 st.title("📊 Análise de Padrões de Velas com IA")
@@ -12,53 +11,69 @@ uploaded_file = st.file_uploader("Envie uma imagem do gráfico de velas", type=[
 
 if uploaded_file:
     try:
-        # Abrir e converter imagem se necessário
+        # 1. Carregamento e conversão segura da imagem
         image = Image.open(uploaded_file)
         
-        # Verificar e converter formato da imagem
-        if image.mode in ('RGBA', 'P'):
+        # Verificação e conversão de formato
+        if image.mode in ('RGBA', 'P', 'LA'):
             image = image.convert('RGB')
-            st.warning("⚠️ Imagem convertida de RGBA/P para RGB para compatibilidade")
-            
-        st.image(image, caption="Imagem enviada", use_column_width=True)
+            st.warning("⚠️ Imagem convertida para RGB para compatibilidade")
+        
+        # 2. Exibição da imagem processada
+        st.image(image, 
+                caption="Imagem enviada para análise",
+                use_column_width=True,
+                output_format="JPEG")
 
-        # Enviar imagem para Roboflow
+        # 3. Preparação para envio à API
         st.info("🔍 Enviando imagem para análise...")
         
-        # Configuração do cliente Roboflow
+        # Converter para bytes com tratamento explícito
+        img_buffer = io.BytesIO()
+        image.save(img_buffer, format='JPEG', quality=95)
+        img_data = img_buffer.getvalue()
+        
+        # 4. Configuração do cliente Roboflow
         CLIENT = InferenceHTTPClient(
             api_url="https://detect.roboflow.com",
-            api_key="PEyV0064YFk1pNh46OS6"  # Sua chave API
+            api_key="PEyV0064YFk1pNh46OS6"  # Lembre-se de usar variáveis de ambiente em produção
         )
         
-        # Converter imagem para bytes antes de enviar
-        img_byte_arr = io.BytesIO()
-        image.save(img_byte_arr, format='JPEG')
-        img_byte_arr.seek(0)
+        # 5. Chamada à API com tratamento robusto
+        result = CLIENT.infer(img_data, model_id="candle-patterns/1")
         
-        # Usando o método correto do InferenceHTTPClient
-        result = CLIENT.infer(img_byte_arr.getvalue(), model_id="candle-patterns/1")
-        
-        if result.get("predictions"):
+        # 6. Processamento dos resultados
+        if result and "predictions" in result:
             predictions = result["predictions"]
-            pattern = predictions[0]["class"]
-            confidence = predictions[0]["confidence"]
-            
-            st.success(f"Padrão detectado: **{pattern}** com confiança de {confidence:.2%}")
-            
-            if "bullish" in pattern.lower():
-                st.markdown("✅ **Sugestão de entrada**: Compra")
-            elif "bearish" in pattern.lower():
-                st.markdown("🚫 **Sugestão de entrada**: Venda")
+            if predictions:
+                prediction = predictions[0]
+                st.success(
+                    f"**Padrão detectado:** {prediction['class'].upper()}\n"
+                    f"**Confiança:** {prediction['confidence']:.2%}"
+                )
+                
+                # Sugestões de trading
+                if "bullish" in prediction['class'].lower():
+                    st.markdown("🟢 **Sugestão:** Posição de COMPRA")
+                    st.progress(prediction['confidence'])
+                elif "bearish" in prediction['class'].lower():
+                    st.markdown("🔴 **Sugestão:** Posição de VENDA")
+                    st.progress(prediction['confidence'])
+                else:
+                    st.markdown("🟡 **Sugestão:** Manter posição atual")
             else:
-                st.markdown("🔄 **Sugestão de entrada**: Manter posição")
+                st.warning("⚠️ Nenhum padrão reconhecível detectado")
         else:
-            st.warning("Nenhum padrão detectado com alta confiança.")
-            
+            st.warning("⚠️ A análise não retornou resultados válidos")
+
     except Exception as e:
-        st.error(f"Erro ao processar imagem: {str(e)}")
+        st.error(f"❌ Erro no processamento: {str(e)}")
+        st.error("Dica: Tente enviar a imagem novamente ou em outro formato")
 
+# Rodapé profissional
 st.markdown("---")
-st.caption("Versão: 1.0 - Desenvolvido por Jefferson - Modelo hospedado via Roboflow")
-st.caption("Versão 1.0 • Desenvolvido por Jefferson • Modelo hospedado via Roboflow")
-
+st.caption("""
+**Versão 2.0** • Sistema de análise de padrões candlestick •  
+Desenvolvido por Jefferson • Modelo hospedado via Roboflow API  
+Última atualização: Agosto 2024
+""")
